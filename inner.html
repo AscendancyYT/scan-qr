@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Scanner</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        video {
+            width: 100%;
+            max-width: 400px;
+            border: 2px solid #ddd;
+            margin-top: 10px;
+        }
+        button {
+            margin: 10px;
+            padding: 10px;
+            cursor: pointer;
+        }
+    </style>
+    <link rel="icon" href="logo.png">
+</head>
+<body>
+
+    <h1>QR Code Scanner</h1>
+    <video id="qr-video" autoplay></video>
+    <p id="result">Scan a QR code...</p>
+
+    <button id="start-camera">Start Camera</button>
+    <button id="stop-camera" hidden>Stop Camera</button>
+    <input type="file" id="file-input" accept="image/*">
+
+    <script type="module">
+        import QrScanner from "https://unpkg.com/qr-scanner@1.4.2/qr-scanner.min.js";
+
+        const video = document.getElementById("qr-video");
+        const result = document.getElementById("result");
+        const fileInput = document.getElementById("file-input");
+        const startCameraBtn = document.getElementById("start-camera");
+        const stopCameraBtn = document.getElementById("stop-camera");
+
+        let qrScanner;
+
+        function displayResult(text) {
+            if (text.startsWith("http://") || text.startsWith("https://")) {
+                result.innerHTML = `QR Code: <a href="${text}" target="_blank">Click</a>`;
+            } else {
+                result.textContent = "QR Code: " + text;
+            }
+        }
+
+        // Start Camera & Scanner
+        startCameraBtn.addEventListener("click", async () => {
+            qrScanner = new QrScanner(video, (decodedText) => {
+                displayResult(decodedText);
+            });
+
+            await qrScanner.start();
+            video.hidden = false;
+            startCameraBtn.hidden = true;
+            stopCameraBtn.hidden = false;
+        });
+
+        // Stop Camera & Scanner
+        stopCameraBtn.addEventListener("click", () => {
+            qrScanner.stop();
+            video.hidden = true;
+            startCameraBtn.hidden = false;
+            stopCameraBtn.hidden = true;
+        });
+
+        // Scan Uploaded Image
+        fileInput.addEventListener("change", async (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            try {
+                const decodedText = await QrScanner.scanImage(file);
+                displayResult(decodedText);
+            } catch {
+                result.textContent = "Invalid QR Code";
+            }
+        });
+    </script>
+
+</body>
+</html>
